@@ -1,0 +1,22 @@
+# Arquivos de Log e Dependências
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Arquivos de Ambiente (SENHAS!)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Pasta de build do Back-end
+server/dist
+
+# Pasta de build do Front-end (Next.js)
+client/.next/
+client/out/
+
+# Arquivos do S.O.
+.DS_Store
+Thumbs.db

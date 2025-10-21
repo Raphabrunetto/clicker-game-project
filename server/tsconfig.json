@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    /* Configuração do Módulo (Mudamos para CommonJS) */
+    "module": "commonjs",
+    "target": "es2020", // Um alvo moderno e compatível
+    "esModuleInterop": true, // Essencial para 'require' de módulos ESM
+    "skipLibCheck": true, // Pula verificação de tipos em node_modules
+
+    /* Configurações Estritas (Mantivemos as suas) */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    
+    /* Caminhos */
+    "rootDir": "./src",
+    
+    /* Nossa correção anterior */
+    "verbatimModuleSyntax": false,
+
+    /* Outros */
+    "forceConsistentCasingInFileNames": true
+  },
+  
+  /* Garantir que o TS olhe tudo dentro da pasta 'src' */
+  "include": [
+    "src/**/*" 
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
