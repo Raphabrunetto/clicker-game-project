@@ -1,0 +1,87 @@
+version: "3.8"
+
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: clicker-server
+    command: sh -c "npx prisma generate && npx prisma db push && npm run dev"
+    ports:
+      - "3333:3333"
+    restart: unless-stopped
+    env_file:
+      - ./server/.env
+    environment:
+      NODE_ENV: development
+      # Override DB to point to local Mongo container (replica set enabled)
+      DATABASE_URL: mongodb://mongo:27017/clickergame?replicaSet=rs0
+      JWT_SECRET: dev-secret-clicker
+      # Optionally set a JWT secret here and update your code to use it
+      # JWT_SECRET: change-me
+      # PORT: "3333"
+    working_dir: /app
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    depends_on:
+      mongo:
+        condition: service_started
+      mongo-init-replica:
+        condition: service_completed_successfully
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: clicker-client
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      # Browser should call the host-mapped port
+      NEXT_PUBLIC_API_URL: http://localhost:3333
+      # SSR (if any) inside the container should use the service DNS
+      API_URL_SERVER: http://server:3333
+      # Improves file watching reliability on some hosts
+      CHOKIDAR_USEPOLLING: "true"
+      HOST: 0.0.0.0
+    working_dir: /app
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - server
+
+  mongo:
+    image: mongo:7
+    container_name: clicker-mongo
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  mongo-init-replica:
+    image: mongo:7
+    depends_on:
+      mongo:
+        condition: service_healthy
+    entrypoint: ["sh", "-c"]
+    command: >
+      "mongosh --host mongo:27017 --eval 'db.adminCommand({ ping: 1 })' >/dev/null 2>&1 || exit 1;
+      mongosh --host mongo:27017 --eval 'try { rs.status().ok } catch (e) { 0 }' >/dev/null 2>&1;
+      mongosh --host mongo:27017 --eval 'try { rs.initiate({_id:\"rs0\", members:[{_id:0, host:\"mongo:27017\"}]}) } catch (e) { if (e.codeName !== \"AlreadyInitialized\") { throw e } }' || true"
+    restart: "no"
+
+volumes:
+  mongo-data:

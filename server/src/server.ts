@@ -20,7 +20,7 @@ fastify.register(cors, {
 
 // <--- 2. Registre o plugin JWT
 fastify.register(jwt, {
-  secret: 'seu-segredo-super-secreto-trocar-depois', 
+  secret: process.env.JWT_SECRET || 'seu-segredo-super-secreto-trocar-depois', 
   // IMPORTANTE: Mude isso para uma string longa e aleatória
   // Você pode colocar isso em seu .env depois, ex: process.env.JWT_SECRET
 });
@@ -47,7 +47,8 @@ fastify.register(gameRoutes);
 
 const start = async () => {
   try {
-    await fastify.listen({ port: 3333 }); // O back-end vai rodar na porta 3333
+    const port = Number(process.env.PORT) || 3333;
+    await fastify.listen({ port, host: '0.0.0.0' }); // Escuta em todas as interfaces para funcionar no Docker
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

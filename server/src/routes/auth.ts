@@ -4,6 +4,7 @@ import { FastifyInstance } from 'fastify';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
+import { authenticate } from '../hooks/authHook';
 
 // Inicializamos o Prisma fora para poder usar em todas as rotas
 const prisma = new PrismaClient();
@@ -141,5 +142,14 @@ export async function authRoutes(fastify: FastifyInstance) {
     }
   });
   // --- FIM DO BLOCO DE LOGIN ---
+
+  // Rota: GET /api/me (retorna info basica do token)
+  fastify.get('/api/me', { onRequest: [authenticate] }, async (request) => {
+    const user = request.user as { sub?: string; username?: string };
+    return {
+      sub: user?.sub,
+      username: user?.username,
+    };
+  });
 
 } // <--- A FUNÇÃO 'authRoutes' TERMINA AQUI
