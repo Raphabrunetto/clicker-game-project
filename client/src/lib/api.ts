@@ -2,11 +2,8 @@
 import axios from 'axios';
 import { useAuthStore } from '@/store/authStore';
 
-// Use different base URLs for browser vs. SSR
-const isBrowser = typeof window !== 'undefined';
-const BASE_URL = isBrowser
-  ? (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333')
-  : (process.env.API_URL_SERVER || process.env.NEXT_PUBLIC_API_URL || 'http://server:3333');
+// Base URL única via env (sem Docker)
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
 
 export const api = axios.create({
   baseURL: BASE_URL,

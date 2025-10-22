@@ -1,5 +1,6 @@
 // server/src/server.ts
 
+import 'dotenv/config';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { authRoutes } from './routes/auth';
@@ -13,9 +14,13 @@ const fastify = Fastify({
 
 // (PrismaClient foi removido daqui, pois agora está em auth.ts)
 
-// Registra o CORS (para permitir que o front-end em localhost:3000 acesse)
+// Registra o CORS (para permitir que o front-end acesse)
 fastify.register(cors, {
-  origin: "http://localhost:3000", // Mude para a URL do seu front-end em produção
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Authorization', 'Content-Type'],
+  preflight: true,
+  maxAge: 86400,
 });
 
 // <--- 2. Registre o plugin JWT
@@ -48,7 +53,7 @@ fastify.register(gameRoutes);
 const start = async () => {
   try {
     const port = Number(process.env.PORT) || 3333;
-    await fastify.listen({ port, host: '0.0.0.0' }); // Escuta em todas as interfaces para funcionar no Docker
+    await fastify.listen({ port, host: '0.0.0.0' });
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);

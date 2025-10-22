@@ -12,6 +12,8 @@ yarn-error.log
 
 # Pasta de build do Back-end
 server/dist
+server/generated/
+server/generated/prisma/
 
 # Pasta de build do Front-end (Next.js)
 client/.next/
@@ -20,3 +22,9 @@ client/out/
 # Arquivos do S.O.
 .DS_Store
 Thumbs.db
+
+# Windows reserved filename accidentally created
+/NUL
+
+# Evitar JS compilado acidentalmente no server/src
+server/src/**/*.js
