@@ -1,10 +1,10 @@
-Clicker Game — Front/Back sem Docker (MongoDB)
+Clicker Game — Front/Back (MongoDB)
 
 - Front-end: Next.js (pasta `client`)
 - Back-end: Fastify + Prisma (MongoDB) (pasta `server`)
 - Conexão: MongoDB (Atlas recomendado). Sem Docker por padrão.
 
-Como rodar localmente (sem Docker)
+Como rodar localmente
 
 - Banco: crie um cluster no MongoDB Atlas e copie a connection string.
 - Server:
@@ -42,6 +42,3 @@ Deploy sugerido
   - `client` → defina `NEXT_PUBLIC_API_URL` para a URL pública do back-end.
   - `server` → defina `JWT_SECRET`, `DATABASE_URL` (Atlas) e `CORS_ORIGIN` com a URL do front.
 
-Sem Docker
-
-- Removi Dockerfiles e docker-compose. O fluxo padrão é front/back + Mongo Atlas.
