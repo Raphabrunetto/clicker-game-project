@@ -120,3 +120,47 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* --- Simple, lightweight animation utilities for game feedback --- */
+@keyframes anim-pop-scale {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes anim-shake-x {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+@keyframes anim-glow {
+  0%, 100% { box-shadow: 0 0 0 rgba(0,0,0,0); }
+  50% { box-shadow: 0 0 24px rgba(99,102,241,0.45); }
+}
+
+@keyframes anim-float-up {
+  0% { opacity: 1; transform: translateY(0) scale(0.95); }
+  100% { opacity: 0; transform: translateY(-28px) scale(1.08); }
+}
+
+.anim-pop { animation: anim-pop-scale 180ms ease-out; }
+.anim-shake { animation: anim-shake-x 420ms ease-in-out; }
+.anim-glow { animation: anim-glow 1200ms ease-in-out; }
+.anim-float-up { animation: anim-float-up 750ms ease-out forwards; }
+
+/* Confetti pieces using CSS variables for direction/rotation */
+@keyframes anim-confetti {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0deg); }
+  100% { opacity: 0; transform: translate(var(--dx, 0px), var(--dy, -80px)) rotate(var(--rot, 360deg)); }
+}
+.confetti-piece {
+  position: absolute;
+  width: 6px;
+  height: 8px;
+  border-radius: 1px;
+  animation: anim-confetti 900ms ease-out forwards;
+  will-change: transform, opacity;
+}
