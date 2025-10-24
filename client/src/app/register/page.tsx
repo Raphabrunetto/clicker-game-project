@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import Link from 'next/link';
 
 export default function RegisterPage() {
   const router = useRouter(); // Hook para redirecionar o usuário
@@ -60,8 +61,10 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Card className="w-[350px]">
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <Card
+        className="auth-card relative w-[420px] sm:w-[460px] overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+      >
         <CardHeader>
           <CardTitle>Criar Conta</CardTitle>
           <CardDescription>
@@ -75,6 +78,7 @@ export default function RegisterPage() {
                 <Label htmlFor="username">Usuário (opcional)</Label>
                 <Input
                   id="username"
+                  autoComplete="nickname"
                   placeholder="Seu nome no jogo"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -85,6 +89,7 @@ export default function RegisterPage() {
                 <Input
                   id="email"
                   type="email"
+                  autoComplete="email"
                   placeholder="seu@email.com"
                   required
                   value={email}
@@ -96,6 +101,7 @@ export default function RegisterPage() {
                 <Input
                   id="password"
                   type="password"
+                  autoComplete="new-password"
                   placeholder="Mínimo 6 caracteres"
                   required
                   value={password}
@@ -103,16 +109,23 @@ export default function RegisterPage() {
                 />
               </div>
 
-              {error && (
-                <p className="text-sm text-red-500">{error}</p>
-              )}
+              {/* Reserva espaço p/ feedback evitando 'jump' do layout */}
+              <div className="min-h-[20px]">
+                {error && (
+                  <p className="text-sm text-red-500">{error}</p>
+                )}
+              </div>
 
             </div>
           </CardContent>
-          <CardFooter>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+          <CardFooter className="flex flex-col gap-4">
+            <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
               {isLoading ? 'Registrando...' : 'Registrar'}
             </Button>
+            <p className="text-sm text-muted-foreground">
+              Já tem conta?{' '}
+              <Link href="/login" className="text-primary underline">Entrar</Link>
+            </p>
           </CardFooter>
         </form>
       </Card>

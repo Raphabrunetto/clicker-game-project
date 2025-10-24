@@ -63,8 +63,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <Card className="w-[350px]">
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <Card
+        className="auth-card relative w-[420px] sm:w-[460px] overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+      >
         <CardHeader>
           <CardTitle>Entrar</CardTitle>
           <CardDescription>
@@ -79,6 +81,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
+                  autoComplete="email"
                   placeholder="seu@email.com"
                   required
                   value={email}
@@ -90,20 +93,24 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type="password"
+                  autoComplete="current-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
 
-              {error && (
-                <p className="text-sm text-red-500">{error}</p>
-              )}
+              {/* Reserva espaço p/ feedback evitando 'jump' do layout */}
+              <div className="min-h-[20px]">
+                {error && (
+                  <p className="text-sm text-red-500">{error}</p>
+                )}
+              </div>
 
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" size="lg" className="w-full" disabled={isLoading}>
               {isLoading ? 'Entrando...' : 'Entrar'}
             </Button>
             <p className="text-sm text-muted-foreground">

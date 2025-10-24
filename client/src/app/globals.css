@@ -164,3 +164,146 @@
   animation: anim-confetti 900ms ease-out forwards;
   will-change: transform, opacity;
 }
+
+/* --- Auth Card entrance + hover animation (non-intrusive) --- */
+@keyframes auth-card-in {
+  0% { opacity: 0; transform: translateY(8px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.auth-card {
+  animation: auth-card-in 220ms ease-out both;
+}
+
+/* ---- Dynamic Stage Theming ---- */
+/* Animated gradient background layer */
+@keyframes bg-pan {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--tier-bg, radial-gradient(1200px 800px at 10% 10%, #0b0b0b, #000));
+  background-size: 160% 160%;
+  animation: bg-pan 18s ease-in-out infinite;
+  opacity: 0.85;
+}
+
+/* Subtle transition when variables change */
+html, body, [data-slot="card"], [data-slot="button"], [data-slot="input"] {
+  transition: background-color 300ms ease, color 300ms ease, border-color 300ms ease, box-shadow 300ms ease;
+}
+
+/* Stage change burst */
+.tier-burst::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(600px 600px at center, rgba(255,255,255,0.08), transparent 60%);
+  animation: auth-card-in 600ms ease-out;
+}
+
+/* Shimmer progress bar */
+@keyframes shimmer-move {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.shimmer-bar {
+  background-image: linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.8), rgba(255,255,255,0.15));
+  background-size: 200% 100%;
+  animation: shimmer-move 1.2s linear infinite;
+  box-shadow: 0 0 18px rgba(255,255,255,0.25);
+}
+
+/* Milestone overlay */
+@keyframes overlay-in {
+  0% { opacity: 0; transform: translateY(12px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.milestone-overlay > div > div {
+  animation: overlay-in 260ms ease-out;
+}
+
+/* Per-stage variables. These override the .dark variables to create distinct looks. */
+body[data-tier='bronze'] {
+  --background: oklch(0.17 0.03 70);
+  --foreground: oklch(0.97 0 0);
+  --card: oklch(0.21 0.02 70);
+  --primary: oklch(0.78 0.12 70);
+  --accent: oklch(0.26 0.02 70);
+  --tier-bg: radial-gradient(1200px 800px at 10% 10%, #2d2218, #0b0907 60%);
+}
+
+body[data-tier='silver'] {
+  --background: oklch(0.2 0.03 255);
+  --card: oklch(0.23 0.03 255);
+  --primary: oklch(0.9 0 0);
+  --accent: oklch(0.4 0 0);
+  --tier-bg: radial-gradient(1300px 900px at 85% 15%, #1e293b, #0a0f1e 60%);
+}
+
+body[data-tier='gold'] {
+  --background: oklch(0.22 0.09 90);
+  --card: oklch(0.25 0.09 90);
+  --primary: oklch(0.88 0.18 90);
+  --accent: oklch(0.5 0.12 90);
+  --tier-bg: radial-gradient(1200px 900px at 50% 0%, #3b2f09, #0a0902 60%);
+}
+
+body[data-tier='emerald'] {
+  --background: oklch(0.22 0.09 150);
+  --card: oklch(0.25 0.09 150);
+  --primary: oklch(0.82 0.19 150);
+  --accent: oklch(0.54 0.14 150);
+  --tier-bg: radial-gradient(1400px 900px at 15% 85%, #0b3b2e, #03120e 60%);
+}
+
+body[data-tier='sapphire'] {
+  --background: oklch(0.2 0.1 250);
+  --card: oklch(0.26 0.1 250);
+  --primary: oklch(0.78 0.2 250);
+  --accent: oklch(0.56 0.19 250);
+  --tier-bg: radial-gradient(1400px 900px at 85% 80%, #0b1f3b, #030912 60%);
+}
+
+body[data-tier='ruby'] {
+  --background: oklch(0.22 0.13 20);
+  --card: oklch(0.25 0.13 20);
+  --primary: oklch(0.8 0.25 20);
+  --accent: oklch(0.6 0.22 20);
+  --tier-bg: radial-gradient(1400px 900px at 50% 90%, #3b0b17, #120307 60%);
+}
+
+body[data-tier='amethyst'] {
+  --background: oklch(0.22 0.12 300);
+  --card: oklch(0.25 0.12 300);
+  --primary: oklch(0.84 0.25 300);
+  --accent: oklch(0.6 0.2 300);
+  --tier-bg: radial-gradient(1400px 900px at 10% 50%, #2c0b3b, #0e0312 60%);
+}
+
+body[data-tier='obsidian'] {
+  --background: oklch(0.16 0.02 270);
+  --card: oklch(0.19 0.02 270);
+  --primary: oklch(0.92 0 0);
+  --accent: oklch(0.45 0.01 270);
+  --tier-bg: radial-gradient(1600px 1100px at 80% 40%, #0e0e14, #000 60%);
+}
+
+body[data-tier='neon'] {
+  --background: oklch(0.18 0.08 300);
+  --card: oklch(0.21 0.08 300);
+  --primary: oklch(0.92 0.2 320);
+  --accent: oklch(0.92 0.22 140);
+  --tier-bg: conic-gradient(from 0deg at 50% 50%, #1a002b, #001a2b, #001a0f, #2b1a00, #1a002b);
+}
+
+/* Milestone theme overrides (layer on top of stage themes) */
+/* 30k – intensify sapphire with electric cyan accents */
+/* milestone-specific overrides removed to stabilize UI */

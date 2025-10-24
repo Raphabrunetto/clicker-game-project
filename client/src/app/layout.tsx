@@ -4,6 +4,8 @@ import type { Metadata } from 'next'
 // 1. Importa a fonte 'Inter'
 import { Inter } from 'next/font/google' 
 import './globals.css'
+import ThemeProgression from '@/components/theme/ThemeProgression'
+import SfxProvider from '@/components/theme/SfxProvider'
 
 // 2. Inicializa a fonte na constante 'inter'
 const inter = Inter({ subsets: ['latin'] })
@@ -23,6 +25,9 @@ export default function RootLayout({
     <html lang="pt-br" className="dark" suppressHydrationWarning> 
       {/* 4. Usa a classe da fonte no 'body' */}
       <body className={inter.className} suppressHydrationWarning>
+        <SfxProvider />
+        {/* Applies visual stage classes based on currency */}
+        <ThemeProgression />
         {children}
       </body>
     </html>

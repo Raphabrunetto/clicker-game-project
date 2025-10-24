@@ -9,6 +9,7 @@ import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import StageHUD from '@/components/theme/StageHUD';
 
 export default function GamePage() {
   const router = useRouter();
@@ -121,6 +122,7 @@ export default function GamePage() {
   const [bursts, setBursts] = useState<{ id: number; dx: number; text: string }[]>([]);
 
   const handleClick = () => {
+    const sfx = getSfxOnce();
     // Adiciona o valor do clique de acordo com os upgrades
     addCurrency(getClickPower());
     // Pop visual no botão
@@ -133,6 +135,8 @@ export default function GamePage() {
     setTimeout(() => {
       setBursts((prev) => prev.filter((b) => b.id !== id));
     }, 800);
+    // Play click sound
+    sfx.click();
     // Salva imediatamente para não perder em recarregamento rápido
     saveGame().catch(() => {});
   };
@@ -189,6 +193,7 @@ export default function GamePage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-8 p-6">
+      <StageHUD />
       <div className="flex flex-col items-center gap-2">
         <h1 className="text-5xl font-bold">Moedas: {currency.toString()}</h1>
         <p className="text-sm opacity-80">Valor por clique: {clickPower.toString()}</p>
@@ -251,10 +256,12 @@ export default function GamePage() {
           <CardFooter>
             <Button
               onClick={() => {
+                const sfx = getSfxOnce();
                 if (!canBuyCm) {
                   // Sem fundos: balança o card
                   setCardShake(true);
                   setTimeout(() => setCardShake(false), 700);
+                  sfx.error();
                   return;
                 }
                 if (buyUpgrade('clickMultiplier')) {
@@ -262,6 +269,7 @@ export default function GamePage() {
                   saveGame().catch(() => {});
                   // Compra com sucesso: confetti!
                   launchConfetti();
+                  sfx.purchase();
                 }
               }}
               className={cn(!canBuyCm && 'opacity-60')}
@@ -275,3 +283,7 @@ export default function GamePage() {
     </div>
   );
 }
+
+// Local util: lazy-get SFX inside this module without React rules overhead.
+import { getSfx } from '@/lib/sfx';
+function getSfxOnce() { return getSfx(); }
