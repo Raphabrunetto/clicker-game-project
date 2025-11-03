@@ -1,11 +1,12 @@
 // client/src/components/theme/StageHUD.tsx
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { CSSProperties, useEffect, useMemo, useRef, useState } from 'react';
 import { useGameStore } from '@/store/gameStore';
 import { getNextStage, getStageForCurrency } from './progression';
 import { cn } from '@/lib/utils';
 import { useSfx } from '@/lib/sfx';
+import { Progress } from '@/components/ui/progress';
 
 export default function StageHUD() {
   const currencyBig = useGameStore((s) => s.currency);
@@ -49,6 +50,7 @@ export default function StageHUD() {
     return range > 0 ? pos / range : 0;
   }, [currency, nextStage, stage.threshold]);
 
+  const progressValue = Math.max(0.02, progress) * 100;
 
   return (
     <div className="pointer-events-none fixed left-1/2 top-4 z-[60] -translate-x-1/2 w-[min(92vw,920px)]">
@@ -73,29 +75,29 @@ export default function StageHUD() {
             </button>
           </div>
         </div>
-        <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-white/10">
-          <div
-            className="shimmer-bar h-full w-0 rounded-full"
-            style={{ width: `${Math.max(0.02, progress) * 100}%` }}
-          />
-        </div>
+        <Progress
+          value={progressValue}
+          className="mt-3 h-2.5 bg-white/10"
+          indicatorClassName="bg-[linear-gradient(135deg,#22c55e,#38bdf8,#6366f1)] shadow-[0_0_18px_rgba(59,130,246,0.45)]"
+        />
 
         {/* Confetti overlay */}
         <div className="pointer-events-none absolute inset-0 overflow-visible">
-          {confetti.map((p) => (
-            <span
-              key={p.id}
-              className="confetti-piece"
-              style={{
-                left: '50%',
-                top: '0%',
-                background: p.color,
-                ['--dx' as any]: `${p.dx}px`,
-                ['--dy' as any]: `${p.dy}px`,
-                ['--rot' as any]: `${p.rot}deg`,
-              }}
-            />
-          ))}
+          {confetti.map((p) => {
+            const style: CSSProperties & {
+              '--dx': string;
+              '--dy': string;
+              '--rot': string;
+            } = {
+              left: '50%',
+              top: '0%',
+              background: p.color,
+              '--dx': `${p.dx}px`,
+              '--dy': `${p.dy}px`,
+              '--rot': `${p.rot}deg`,
+            };
+            return <span key={p.id} className="confetti-piece" style={style} />;
+          })}
         </div>
       </div>
     </div>

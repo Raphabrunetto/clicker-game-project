@@ -3,6 +3,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+export type ClickVariant = 'classic' | 'retro' | 'laser';
+
 type SfxAPI = {
   click: () => void;
   stageUp: () => void;
@@ -16,10 +18,16 @@ type SfxAPI = {
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
 let muted = false;
+let clickVariant: ClickVariant = 'classic';
+
+type AudioWindow = typeof window & {
+  webkitAudioContext?: typeof AudioContext;
+};
 
 function ensure() {
   if (!ctx) {
-    const AC = (window as any).AudioContext || (window as any).webkitAudioContext;
+    const audioWindow = window as AudioWindow;
+    const AC = audioWindow.AudioContext || audioWindow.webkitAudioContext;
     if (!AC) return;
     ctx = new AC();
     master = ctx.createGain();
@@ -54,13 +62,55 @@ function createOsc(freq: number, type: OscillatorType = 'triangle', when = now()
   osc.stop(when + dur + 0.02);
 }
 
-function click() {
+function clickClassic() {
   ensure();
   if (!ctx) return;
   const t = now();
-  // short percussive blip + slight freq glide
   createOsc(220, 'triangle', t, 0.07, 0.4);
   createOsc(440, 'sine', t + 0.01, 0.03, 0.2);
+}
+
+function clickRetro() {
+  ensure();
+  if (!ctx) return;
+  const t = now();
+  createOsc(160, 'square', t, 0.085, 0.4);
+  createOsc(320, 'square', t + 0.015, 0.05, 0.26);
+  createOsc(640, 'triangle', t + 0.04, 0.04, 0.18);
+}
+
+function clickLaser() {
+  ensure();
+  if (!ctx || !master) return;
+  const t = now();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(960, t);
+  osc.frequency.exponentialRampToValueAtTime(320, t + 0.16);
+  gain.gain.setValueAtTime(0, t);
+  gain.gain.linearRampToValueAtTime(0.55, t + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+  osc.connect(gain).connect(master);
+  osc.start(t);
+  osc.stop(t + 0.22);
+  createOsc(1280, 'triangle', t + 0.05, 0.06, 0.18);
+}
+
+function click() {
+  ensure();
+  if (!ctx) return;
+  switch (clickVariant) {
+    case 'retro':
+      clickRetro();
+      break;
+    case 'laser':
+      clickLaser();
+      break;
+    default:
+      clickClassic();
+      break;
+  }
 }
 
 function stageUp() {
@@ -103,6 +153,14 @@ export function initMutedFromStorage() {
   try { muted = localStorage.getItem('clicker:sfx-muted') === '1'; } catch {}
 }
 
+export function setClickVariant(variant: ClickVariant) {
+  clickVariant = variant;
+}
+
+export function getClickVariant(): ClickVariant {
+  return clickVariant;
+}
+
 export function getSfx(): SfxAPI {
   return {
     click,
@@ -138,4 +196,3 @@ export function useSfx() {
     setMuted: setIsMuted,
   } as const;
 }
-

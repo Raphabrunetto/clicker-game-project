@@ -3,80 +3,81 @@ import { create } from 'zustand';
 import { useAuthStore } from './authStore';
 import { api } from '@/lib/api';
 
-// 1. Definimos a "forma" do estado do jogo
+export type SoundVariant = 'classic' | 'retro' | 'laser';
+
 type Upgrades = {
-  // Nível do upgrade de multiplicador de cliques
-  clickMultiplier?: number; // default 0
+  clickMultiplier?: number;
+  soundPack?: number;
 };
+
+const SOUND_PACK_COSTS = [BigInt(120), BigInt(260)];
+const SOUND_VARIANTS: SoundVariant[] = ['classic', 'retro', 'laser'];
 
 interface GameState {
   currency: bigint;
-  upgrades: Upgrades; // JSON-serializável
+  upgrades: Upgrades;
   ownerUserId: string | null;
 
-  // Carrega os dados do back-end
   loadGameState: (data: { currency: string; upgrades: string }) => void;
-
-  // Moeda (cliques somados)
   addCurrency: (amount: bigint) => void;
 
-  // Valor por clique, derivado dos upgrades
   getClickPower: () => bigint;
-
-  // Cálculo do custo do próximo nível do upgrade
   getUpgradeCost: (key: 'clickMultiplier') => bigint;
+  getSoundPackCost: () => bigint;
 
-  // Compra de upgrade (desconta moeda e incrementa nível)
   buyUpgrade: (key: 'clickMultiplier') => boolean;
+  buySoundPack: () => boolean;
 
-  // Salvar jogo no back-end
+  getSoundVariant: () => SoundVariant;
+
   saveGame: () => Promise<void>;
-
-  // Define o dono atual desse estado (amarrar ao usuário logado)
   setOwnerUserId: (id: string | null) => void;
-
-  // Reseta o estado do jogo (ao trocar de usuário)
   reset: () => void;
 }
 
-// 2. Criamos o store
 export const useGameStore = create<GameState>((set, get) => ({
-  // Estado inicial
   currency: BigInt(0),
   upgrades: {},
   ownerUserId: null,
 
-  // Ação para carregar o jogo
   loadGameState: (data) => {
+    let upgrades: Upgrades = {};
+    try {
+      upgrades = JSON.parse(data.upgrades || '{}') ?? {};
+    } catch {
+      upgrades = {};
+    }
     set({
       currency: BigInt(data.currency),
-      upgrades: JSON.parse(data.upgrades || "{}"),
+      upgrades,
     });
   },
-  
-  // Ação para adicionar moedas
+
   addCurrency: (amount) => {
     set((state) => ({
       currency: state.currency + amount,
     }));
   },
 
-  // Valor por clique: 1 base + 1 por nível
   getClickPower: () => {
     const level = get().upgrades.clickMultiplier ?? 0;
-    const power = 1 + level; // 1 -> 2 -> 3 -> ...
+    const power = 1 + level;
     return BigInt(power);
   },
 
-  // Custo do próximo nível do upgrade
-  // Estratégia simples e clara: custo linear 5, 10, 15, 20...
   getUpgradeCost: (key) => {
     if (key === 'clickMultiplier') {
-      const level = get().upgrades.clickMultiplier ?? 0; // nível ATUAL
-      const nextIndex = level + 1; // 1º nível custa 5, 2º 10...
+      const level = get().upgrades.clickMultiplier ?? 0;
+      const nextIndex = level + 1;
       return BigInt(5 * nextIndex);
     }
     return BigInt(0);
+  },
+
+  getSoundPackCost: () => {
+    const level = get().upgrades.soundPack ?? 0;
+    if (level >= SOUND_PACK_COSTS.length) return BigInt(0);
+    return SOUND_PACK_COSTS[level];
   },
 
   buyUpgrade: (key) => {
@@ -94,15 +95,33 @@ export const useGameStore = create<GameState>((set, get) => ({
     return true;
   },
 
-  // Salva o estado atual no back-end
+  buySoundPack: () => {
+    const cost = get().getSoundPackCost();
+    if (cost <= BigInt(0)) return false;
+    const { currency, upgrades } = get();
+    if (currency < cost) return false;
+    const currentLevel = upgrades.soundPack ?? 0;
+    const nextLevel = Math.min(currentLevel + 1, SOUND_VARIANTS.length - 1);
+
+    set({
+      currency: currency - cost,
+      upgrades: { ...upgrades, soundPack: nextLevel },
+    });
+    return true;
+  },
+
+  getSoundVariant: () => {
+    const level = get().upgrades.soundPack ?? 0;
+    const idx = Math.min(level, SOUND_VARIANTS.length - 1);
+    return SOUND_VARIANTS[idx];
+  },
+
   saveGame: async () => {
     const state = get();
     const auth = useAuthStore.getState();
-    // Atribui dono se ainda não houver e usuário está presente
     if (auth.userId && !state.ownerUserId) {
       set({ ownerUserId: auth.userId });
     }
-    // Só salva se o owner do estado for o usuário atual
     if (!auth.token || !auth.userId || get().ownerUserId !== auth.userId) return;
     await api.put('/api/game/save', {
       currency: state.currency.toString(),

@@ -6,6 +6,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import ThemeProgression from '@/components/theme/ThemeProgression'
 import SfxProvider from '@/components/theme/SfxProvider'
+import { ThemeProvider } from '@/components/theme/ThemeProvider'
 
 // 2. Inicializa a fonte na constante 'inter'
 const inter = Inter({ subsets: ['latin'] })
@@ -21,14 +22,14 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    // 3. Adiciona a classe 'dark' aqui
-    <html lang="pt-br" className="dark" suppressHydrationWarning> 
-      {/* 4. Usa a classe da fonte no 'body' */}
+    <html lang="pt-br" suppressHydrationWarning> 
       <body className={inter.className} suppressHydrationWarning>
-        <SfxProvider />
-        {/* Applies visual stage classes based on currency */}
-        <ThemeProgression />
-        {children}
+        <ThemeProvider defaultTheme="dark">
+          <SfxProvider />
+          {/* Applies visual stage classes based on currency */}
+          <ThemeProgression />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   )
