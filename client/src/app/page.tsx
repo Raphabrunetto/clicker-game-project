@@ -10,11 +10,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import StageHUD from '@/components/theme/StageHUD';
-import OrbField from '@/components/theme/OrbField';
 import { getNextStage, getStageForCurrency } from '@/components/theme/progression';
+import StageBackdrop from '@/components/theme/StageBackdrop';
+import { getThemeBand } from '@/components/theme/themeBands';
 import { ArrowRight, Coins, Music2, Sparkles, Zap } from 'lucide-react';
 
 type SoundVariantMeta = {
@@ -42,6 +41,66 @@ const SOUND_VARIANTS: SoundVariantMeta[] = [
     name: 'Neon Laser',
     tagline: 'Explosao futurista para o late game.',
     description: 'Rampa serrilhada energizada com cauda cristalina. Brilha em stages altos.',
+  },
+  {
+    key: 'nebula',
+    name: 'Nebula Bloom',
+    tagline: 'Camadas etereas com brilho espacial.',
+    description: 'Cluster cintilante com sweep ascendente e cauda suave. Perfeito para cliques calmos.',
+  },
+  {
+    key: 'pulse',
+    name: 'Pulse Driver',
+    tagline: 'Graves pulsantes com impacto rapido.',
+    description: 'Batida grave sincopada seguida de agudos curtos. Ideal para manter ritmo acelerado.',
+  },
+  {
+    key: 'crystal',
+    name: 'Crystal Bells',
+    tagline: 'Sinos digitais com brilho gelado.',
+    description: 'Tons agudos multifasicos com harmonia delicada. Brilha em combos rapidos.',
+  },
+  {
+    key: 'nova',
+    name: 'Nova Burst',
+    tagline: 'Explosao controlada de alta energia.',
+    description: 'Serra ascendente com cauda expansiva. Marcante para milestones importantes.',
+  },
+  {
+    key: 'quantum',
+    name: 'Quantum Step',
+    tagline: 'Clicks fractais em camadas curtas.',
+    description: 'Saltos microtonais em ritmo acelerado. Sensacao de codigo em execucao.',
+  },
+  {
+    key: 'aurora',
+    name: 'Aurora Veil',
+    tagline: 'Tapete luminoso com flares suaves.',
+    description: 'Chimes sinuosos com shimmer lateral. Para runs relaxados e continuos.',
+  },
+  {
+    key: 'glitch',
+    name: 'Glitch Byte',
+    tagline: 'Estalos digitais e cortes rapidos.',
+    description: 'Blips granulados com cortes alternados. Soa como um modem em modo turbo.',
+  },
+  {
+    key: 'zenith',
+    name: 'Zenith Choir',
+    tagline: 'Coral sintetico, majestoso e expansivo.',
+    description: 'Harmonia vocal sintetizada com layering suave. Ideal para stages lendarios.',
+  },
+  {
+    key: 'stardust',
+    name: 'Stardust Trails',
+    tagline: 'Particulas cintilantes em queda rapida.',
+    description: 'Arpejo cintilante com cauda prismatica. Cada clique deixa um rastro brilhante.',
+  },
+  {
+    key: 'miau',
+    name: 'Miau Ensemble',
+    tagline: 'Miadinhos fofos celebrando cada clique.',
+    description: 'Variacoes que lembram gatinhos brincando. O premium felino do final da jornada.',
   },
 ];
 
@@ -198,13 +257,7 @@ export default function GamePage() {
     [currencyNumber]
   );
   const nextStage = useMemo(() => getNextStage(stage), [stage]);
-  const stageProgress = useMemo(() => {
-    if (!nextStage) return 1;
-    const range = nextStage.threshold - stage.threshold;
-    if (range <= 0) return 1;
-    const value = (currencyNumber - stage.threshold) / range;
-    return Math.min(1, Math.max(0, value));
-  }, [currencyNumber, nextStage, stage.threshold]);
+  const themeBand = useMemo(() => getThemeBand(currencyNumber), [currencyNumber]);
   const currencyDisplay = useMemo(
     () => currencyNumber.toLocaleString('pt-BR'),
     [currencyNumber]
@@ -213,6 +266,8 @@ export default function GamePage() {
     () => (nextStage ? nextStage.threshold.toLocaleString('pt-BR') : null),
     [nextStage]
   );
+
+  const prevStageKeyRef = useRef(stage.key);
 
   const [cardPulse, setCardPulse] = useState(false);
   const [cardShake, setCardShake] = useState(false);
@@ -241,7 +296,7 @@ export default function GamePage() {
     prevCanBuySoundRef.current = canBuySound;
   }, [canBuySound]);
 
-  const launchConfetti = () => {
+  function launchConfetti() {
     const colors = ['#22c55e', '#06b6d4', '#f59e0b', '#ef4444', '#3b82f6', '#a855f7'];
     const pieces = Array.from({ length: 14 }).map((_, i) => ({
       id: Date.now() + i,
@@ -252,7 +307,21 @@ export default function GamePage() {
     }));
     setConfetti(pieces);
     setTimeout(() => setConfetti([]), 1000);
-  };
+  }
+
+  useEffect(() => {
+    if (!isReady) {
+      prevStageKeyRef.current = stage.key;
+      return;
+    }
+    const previous = prevStageKeyRef.current;
+    prevStageKeyRef.current = stage.key;
+    if (previous === stage.key) return;
+    const sfx = getSfxOnce();
+    sfx.resume().catch(() => {});
+    sfx.stageUp();
+    launchConfetti();
+  }, [stage.key, isReady]);
 
   const handleSoundPreview = () => {
     const sfx = getSfxOnce();
@@ -292,8 +361,7 @@ export default function GamePage() {
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6 py-16">
-      <OrbField />
-      <StageHUD />
+      <StageBackdrop band={themeBand} />
       <div className="relative z-10 flex w-full max-w-5xl flex-col gap-8">
         <Card className="glass-panel border-white/5 bg-white/5">
           <CardHeader className="space-y-4">
@@ -326,7 +394,6 @@ export default function GamePage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-3 pt-0">
-            <Progress value={stageProgress * 100} className="h-3" />
             <div className="flex flex-col gap-2 text-xs text-white/60 sm:flex-row sm:items-center sm:justify-between">
               <span className="flex items-center gap-1">
                 <Sparkles className="h-3.5 w-3.5" />
@@ -407,7 +474,7 @@ export default function GamePage() {
               <Button
                 onClick={handleClick}
                 className={cn(
-                  'relative inline-flex min-w-[8rem] transform items-center gap-2 rounded-full bg-gradient-to-br from-emerald-500 via-sky-500 to-indigo-500 px-8 py-6 text-lg font-semibold text-white shadow-[0_18px_40px_rgba(59,130,246,0.45)] transition-all duration-150 hover:scale-105 hover:shadow-[0_22px_50px_rgba(59,130,246,0.55)] focus-visible:outline-none active:scale-95',
+                  'stage-cta stage-cta-primary relative inline-flex min-w-[8rem] transform items-center gap-2 rounded-full px-8 py-6 text-lg font-semibold text-white transition-all duration-150 hover:scale-105 focus-visible:outline-none active:scale-95',
                   buttonPopped && 'anim-pop'
                 )}
                 size="lg"
@@ -520,7 +587,7 @@ export default function GamePage() {
                   }
                 }}
                 className={cn(
-                  'min-w-[8rem] bg-gradient-to-r from-emerald-500 via-sky-500 to-indigo-500 text-white shadow-[0_12px_30px_rgba(59,130,246,0.35)] hover:shadow-[0_16px_40px_rgba(59,130,246,0.45)]',
+                  'stage-cta stage-cta-secondary min-w-[8rem] text-white transition-all duration-150 hover:scale-105 focus-visible:outline-none active:scale-95',
                   !canBuyCm && 'opacity-60'
                 )}
                 title={!canBuyCm ? 'Moedas insuficientes' : undefined}
@@ -604,7 +671,7 @@ export default function GamePage() {
                 <Button
                   onClick={handleSoundPurchase}
                   className={cn(
-                    'min-w-[8rem] bg-gradient-to-r from-sky-500 via-indigo-500 to-purple-500 text-white shadow-[0_12px_30px_rgba(129,140,248,0.35)] hover:shadow-[0_16px_40px_rgba(129,140,248,0.45)]',
+                    'stage-cta stage-cta-secondary min-w-[8rem] text-white transition-all duration-150 hover:scale-105 focus-visible:outline-none active:scale-95',
                     !canBuySound && 'opacity-60'
                   )}
                   disabled={isSoundMaxed}

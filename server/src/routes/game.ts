@@ -10,7 +10,6 @@ interface JwtUserPayload {
   iat: number;
   exp: number;
 }
-// --- FIM DA ADIÇÃO ---
 
 export async function gameRoutes(fastify: FastifyInstance) {
 

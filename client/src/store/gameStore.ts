@@ -3,15 +3,55 @@ import { create } from 'zustand';
 import { useAuthStore } from './authStore';
 import { api } from '@/lib/api';
 
-export type SoundVariant = 'classic' | 'retro' | 'laser';
+export type SoundVariant =
+  | 'classic'
+  | 'retro'
+  | 'laser'
+  | 'nebula'
+  | 'pulse'
+  | 'crystal'
+  | 'nova'
+  | 'quantum'
+  | 'aurora'
+  | 'glitch'
+  | 'zenith'
+  | 'stardust'
+  | 'miau';
 
 type Upgrades = {
   clickMultiplier?: number;
   soundPack?: number;
 };
 
-const SOUND_PACK_COSTS = [BigInt(120), BigInt(260)];
-const SOUND_VARIANTS: SoundVariant[] = ['classic', 'retro', 'laser'];
+const SOUND_PACK_COSTS = [
+  BigInt(120),
+  BigInt(260),
+  BigInt(520),
+  BigInt(900),
+  BigInt(1400),
+  BigInt(2100),
+  BigInt(3000),
+  BigInt(4200),
+  BigInt(5800),
+  BigInt(7800),
+  BigInt(10200),
+  BigInt(13000),
+];
+const SOUND_VARIANTS: SoundVariant[] = [
+  'classic',
+  'retro',
+  'laser',
+  'nebula',
+  'pulse',
+  'crystal',
+  'nova',
+  'quantum',
+  'aurora',
+  'glitch',
+  'zenith',
+  'stardust',
+  'miau',
+];
 
 interface GameState {
   currency: bigint;

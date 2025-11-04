@@ -20,4 +20,4 @@ export async function authRoutes(fastify: FastifyInstance) {
     };
   });
 
-} // <--- A FUNÇÃO 'authRoutes' TERMINA AQUI
+} 

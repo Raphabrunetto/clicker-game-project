@@ -3,7 +3,20 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-export type ClickVariant = 'classic' | 'retro' | 'laser';
+export type ClickVariant =
+  | 'classic'
+  | 'retro'
+  | 'laser'
+  | 'nebula'
+  | 'pulse'
+  | 'crystal'
+  | 'nova'
+  | 'quantum'
+  | 'aurora'
+  | 'glitch'
+  | 'zenith'
+  | 'stardust'
+  | 'miau';
 
 type SfxAPI = {
   click: () => void;
@@ -97,20 +110,184 @@ function clickLaser() {
   createOsc(1280, 'triangle', t + 0.05, 0.06, 0.18);
 }
 
+function clickNebula() {
+  ensure();
+  if (!ctx || !master) return;
+  const t = now();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(280, t);
+  osc.frequency.linearRampToValueAtTime(520, t + 0.14);
+  osc.frequency.linearRampToValueAtTime(320, t + 0.28);
+  gain.gain.setValueAtTime(0, t);
+  gain.gain.linearRampToValueAtTime(0.45, t + 0.025);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.34);
+  osc.connect(gain).connect(master);
+  osc.start(t);
+  osc.stop(t + 0.36);
+  createOsc(780, 'triangle', t + 0.06, 0.09, 0.22);
+}
+
+function clickPulse() {
+  ensure();
+  if (!ctx) return;
+  const t = now();
+  createOsc(150, 'square', t, 0.08, 0.36);
+  createOsc(220, 'square', t + 0.05, 0.06, 0.28);
+  createOsc(110, 'sine', t + 0.03, 0.12, 0.2);
+}
+
+function clickCrystal() {
+  ensure();
+  if (!ctx) return;
+  const t = now();
+  createOsc(880, 'triangle', t, 0.08, 0.32);
+  createOsc(1320, 'triangle', t + 0.02, 0.06, 0.26);
+  createOsc(1760, 'sine', t + 0.05, 0.05, 0.18);
+}
+
+function clickNova() {
+  ensure();
+  if (!ctx || !master) return;
+  const t = now();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(420, t);
+  osc.frequency.exponentialRampToValueAtTime(1080, t + 0.08);
+  osc.frequency.exponentialRampToValueAtTime(260, t + 0.22);
+  gain.gain.setValueAtTime(0, t);
+  gain.gain.linearRampToValueAtTime(0.55, t + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+  osc.connect(gain).connect(master);
+  osc.start(t);
+  osc.stop(t + 0.28);
+  createOsc(1280, 'square', t + 0.05, 0.07, 0.22);
+}
+
+function clickQuantum() {
+  ensure();
+  if (!ctx || !master) return;
+  const t = now();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(240, t);
+  osc.frequency.setValueAtTime(360, t + 0.04);
+  osc.frequency.setValueAtTime(540, t + 0.08);
+  osc.frequency.setValueAtTime(810, t + 0.12);
+  gain.gain.setValueAtTime(0, t);
+  gain.gain.linearRampToValueAtTime(0.42, t + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+  osc.connect(gain).connect(master);
+  osc.start(t);
+  osc.stop(t + 0.2);
+  createOsc(960, 'triangle', t + 0.1, 0.05, 0.18);
+}
+
+function clickAurora() {
+  ensure();
+  if (!ctx || !master) return;
+  const t = now();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(320, t);
+  osc.frequency.linearRampToValueAtTime(440, t + 0.12);
+  osc.frequency.linearRampToValueAtTime(280, t + 0.28);
+  gain.gain.setValueAtTime(0, t);
+  gain.gain.linearRampToValueAtTime(0.4, t + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+  osc.connect(gain).connect(master);
+  osc.start(t);
+  osc.stop(t + 0.34);
+  createOsc(640, 'sine', t + 0.08, 0.12, 0.18);
+  createOsc(960, 'sine', t + 0.15, 0.08, 0.15);
+}
+
+function clickGlitch() {
+  ensure();
+  if (!ctx || !master) return;
+  const baseCtx = ctx;
+  const baseMaster = master;
+  const t = now();
+  [0, 0.03, 0.06].forEach((offset, idx) => {
+    const osc = baseCtx.createOscillator();
+    const gain = baseCtx.createGain();
+    osc.type = idx === 1 ? 'square' : 'sawtooth';
+    osc.frequency.setValueAtTime(200 + idx * 160, t + offset);
+    gain.gain.setValueAtTime(0, t + offset);
+    gain.gain.linearRampToValueAtTime(0.4 - idx * 0.08, t + offset + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + offset + 0.05);
+    osc.connect(gain).connect(baseMaster);
+    osc.start(t + offset);
+    osc.stop(t + offset + 0.07);
+  });
+  createOsc(960, 'square', t + 0.05, 0.03, 0.2);
+}
+
+function clickZenith() {
+  ensure();
+  if (!ctx) return;
+  const t = now();
+  createOsc(256, 'sine', t, 0.1, 0.3);
+  createOsc(384, 'sine', t + 0.05, 0.09, 0.26);
+  createOsc(512, 'triangle', t + 0.1, 0.08, 0.22);
+  createOsc(768, 'triangle', t + 0.15, 0.06, 0.18);
+}
+
+function clickStardust() {
+  ensure();
+  if (!ctx) return;
+  const t = now();
+  createOsc(680, 'triangle', t, 0.06, 0.28);
+  createOsc(960, 'sine', t + 0.025, 0.06, 0.22);
+  createOsc(1280, 'triangle', t + 0.05, 0.08, 0.18);
+  createOsc(1520, 'sine', t + 0.08, 0.05, 0.15);
+}
+
+function clickMiau() {
+  ensure();
+  if (!ctx || !master) return;
+  const t = now();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(320, t);
+  osc.frequency.exponentialRampToValueAtTime(520, t + 0.08);
+  osc.frequency.exponentialRampToValueAtTime(240, t + 0.26);
+  gain.gain.setValueAtTime(0, t);
+  gain.gain.linearRampToValueAtTime(0.5, t + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+  osc.connect(gain).connect(master);
+  osc.start(t);
+  osc.stop(t + 0.34);
+  createOsc(660, 'sine', t + 0.12, 0.07, 0.22);
+  createOsc(440, 'sine', t + 0.18, 0.06, 0.18);
+}
+
+const CLICK_VARIANT_HANDLERS: Record<ClickVariant, () => void> = {
+  classic: clickClassic,
+  retro: clickRetro,
+  laser: clickLaser,
+  nebula: clickNebula,
+  pulse: clickPulse,
+  crystal: clickCrystal,
+  nova: clickNova,
+  quantum: clickQuantum,
+  aurora: clickAurora,
+  glitch: clickGlitch,
+  zenith: clickZenith,
+  stardust: clickStardust,
+  miau: clickMiau,
+};
+
 function click() {
   ensure();
   if (!ctx) return;
-  switch (clickVariant) {
-    case 'retro':
-      clickRetro();
-      break;
-    case 'laser':
-      clickLaser();
-      break;
-    default:
-      clickClassic();
-      break;
-  }
+  const handler = CLICK_VARIANT_HANDLERS[clickVariant] ?? clickClassic;
+  handler();
 }
 
 function stageUp() {
