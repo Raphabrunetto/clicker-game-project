@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { getNextStage, getStageForCurrency } from '@/components/theme/progression';
 import StageBackdrop from '@/components/theme/StageBackdrop';
 import { getThemeBand } from '@/components/theme/themeBands';
+import { getSfx, setClickVariant } from '@/lib/sfx';
 import { ArrowRight, Coins, Music2, Sparkles, Zap } from 'lucide-react';
 
 type SoundVariantMeta = {
@@ -694,7 +695,6 @@ export default function GamePage() {
   );
 }
 
-import { getSfx, setClickVariant } from '@/lib/sfx';
 function getSfxOnce() {
   return getSfx();
 }
