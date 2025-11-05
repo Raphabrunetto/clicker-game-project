@@ -10,12 +10,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { getNextStage, getStageForCurrency } from '@/components/theme/progression';
 import StageBackdrop from '@/components/theme/StageBackdrop';
 import { getThemeBand } from '@/components/theme/themeBands';
 import { getSfx, setClickVariant } from '@/lib/sfx';
-import { ArrowRight, Coins, Music2, Sparkles, Zap } from 'lucide-react';
+import { ArrowRight, ChevronDown, Coins, Music2, Sparkles, Zap } from 'lucide-react';
 
 type SoundVariantMeta = {
   key: SoundVariant;
@@ -122,6 +131,9 @@ export default function GamePage() {
     buyUpgrade,
     buySoundPack,
     upgrades,
+    getSoundVariant,
+    getUnlockedSoundVariants,
+    setSoundVariant,
   } = useGameStore();
   const { userId } = useAuthStore();
   const [isReady, setIsReady] = useState(false);
@@ -242,16 +254,22 @@ export default function GamePage() {
   const currencyNumber = Number(currency);
 
   const soundLevel = upgrades?.soundPack ?? 0;
+  const unlockedSoundKeys = getUnlockedSoundVariants();
+  const currentSoundKey = getSoundVariant();
   const currentSoundMeta =
-    SOUND_VARIANTS[Math.min(soundLevel, SOUND_VARIANTS.length - 1)];
+    SOUND_VARIANTS.find((variant) => variant.key === currentSoundKey) ??
+    SOUND_VARIANTS[0];
+  const unlockedSoundMeta = SOUND_VARIANTS.filter((variant) =>
+    unlockedSoundKeys.includes(variant.key)
+  );
   const nextSoundMeta = SOUND_VARIANTS[soundLevel + 1];
   const soundCost = getSoundPackCost();
   const isSoundMaxed = !nextSoundMeta;
   const canBuySound = Boolean(nextSoundMeta) && currency >= soundCost;
 
   useEffect(() => {
-    setClickVariant(currentSoundMeta.key);
-  }, [currentSoundMeta.key]);
+    setClickVariant(currentSoundKey);
+  }, [currentSoundKey]);
 
   const stage = useMemo(
     () => getStageForCurrency(currencyNumber),
@@ -330,6 +348,17 @@ export default function GamePage() {
     sfx.click();
   };
 
+  const handleSoundSelect = (value: string) => {
+    if (value === currentSoundKey) return;
+    const variant = value as SoundVariant;
+    const applied = setSoundVariant(variant);
+    if (!applied) return;
+    const sfx = getSfxOnce();
+    sfx.resume().catch(() => {});
+    sfx.click();
+    saveGame().catch(() => {});
+  };
+
   const handleSoundPurchase = () => {
     if (isSoundMaxed) return;
     const sfx = getSfxOnce();
@@ -339,12 +368,12 @@ export default function GamePage() {
       sfx.error();
       return;
     }
-    const targetVariant = nextSoundMeta?.key ?? currentSoundMeta.key;
     if (buySoundPack()) {
+      const newVariant = getSoundVariant();
+      setClickVariant(newVariant);
       saveGame().catch(() => {});
       setSoundCardPulse(true);
       setTimeout(() => setSoundCardPulse(false), 1200);
-      setClickVariant(targetVariant);
       sfx.purchase();
       setTimeout(() => {
         sfx.click();
@@ -669,6 +698,51 @@ export default function GamePage() {
                 >
                   Testar som
                 </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="secondary"
+                      className="w-full bg-white/10 text-white hover:bg-white/20 sm:w-auto"
+                      disabled={unlockedSoundMeta.length <= 1}
+                    >
+                      {currentSoundMeta.name}
+                      <ChevronDown className="h-4 w-4 opacity-70" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-72 space-y-1">
+                    <DropdownMenuLabel className="text-xs uppercase tracking-wide text-white/60">
+                      Timbres desbloqueados
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuRadioGroup
+                      value={currentSoundKey}
+                      onValueChange={handleSoundSelect}
+                    >
+                      {unlockedSoundMeta.map((variant) => (
+                        <DropdownMenuRadioItem
+                          key={variant.key}
+                          value={variant.key}
+                          className="flex flex-col items-start gap-1 text-white"
+                        >
+                          <span className="text-sm font-semibold text-white">
+                            {variant.name}
+                          </span>
+                          <span className="text-xs text-white/60">
+                            {variant.tagline}
+                          </span>
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                    {!isSoundMaxed && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <p className="px-2 py-1 text-xs text-white/50">
+                          Desbloqueie novos timbres adquirindo pacotes sonoros.
+                        </p>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button
                   onClick={handleSoundPurchase}
                   className={cn(

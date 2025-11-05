@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { playRandomCatSample, preloadCatSamples } from '@/lib/miauSample';
 
 export type ClickVariant =
   | 'classic'
@@ -54,6 +55,13 @@ async function resume() {
   if (ctx && ctx.state !== 'running') {
     await ctx.resume();
   }
+  if (clickVariant === 'miau') {
+    try {
+      await preloadCatSamples(ctx);
+    } catch {
+      // ignore fetch/decode errors, fallback will handle
+    }
+  }
 }
 
 function now() {
@@ -73,6 +81,30 @@ function createOsc(freq: number, type: OscillatorType = 'triangle', when = now()
   osc.connect(gain).connect(master);
   osc.start(when);
   osc.stop(when + dur + 0.02);
+}
+
+function createNoise(dur = 0.25, when = now(), vol = 0.2) {
+  if (!ctx || !master) return;
+  const sampleRate = ctx.sampleRate;
+  const frameCount = Math.max(1, Math.floor(sampleRate * dur));
+  const buffer = ctx.createBuffer(1, frameCount, sampleRate);
+  const data = buffer.getChannelData(0);
+  let lastOut = 0;
+  for (let i = 0; i < frameCount; i += 1) {
+    const white = Math.random() * 2 - 1;
+    lastOut = (lastOut + 0.02 * white) / 1.02;
+    data[i] = lastOut;
+  }
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.0001, when);
+  gain.gain.exponentialRampToValueAtTime(vol, when + 0.02);
+  gain.gain.linearRampToValueAtTime(vol * 0.6, when + dur * 0.4);
+  gain.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+  noise.connect(gain).connect(master);
+  noise.start(when);
+  noise.stop(when + dur);
 }
 
 function clickClassic() {
@@ -247,24 +279,89 @@ function clickStardust() {
   createOsc(1520, 'sine', t + 0.08, 0.05, 0.15);
 }
 
+function playProceduralMiau(t: number) {
+  if (!ctx || !master) return;
+  const base = ctx.createOscillator();
+  const startFreq = 260 + Math.random() * 50;
+  const peakFreq = 520 + Math.random() * 80;
+  const tailFreq = 210 + Math.random() * 40;
+  base.type = 'sawtooth';
+  base.frequency.setValueAtTime(startFreq, t);
+  base.frequency.exponentialRampToValueAtTime(peakFreq, t + 0.12);
+  base.frequency.exponentialRampToValueAtTime(tailFreq, t + 0.4);
+
+  const formantA = ctx.createBiquadFilter();
+  formantA.type = 'bandpass';
+  formantA.Q.setValueAtTime(7, t);
+  formantA.frequency.setValueAtTime(780, t);
+  formantA.frequency.linearRampToValueAtTime(1180, t + 0.08);
+  formantA.frequency.linearRampToValueAtTime(600, t + 0.28);
+
+  const formantE = ctx.createBiquadFilter();
+  formantE.type = 'bandpass';
+  formantE.Q.setValueAtTime(5.5, t);
+  formantE.frequency.setValueAtTime(1500, t);
+  formantE.frequency.linearRampToValueAtTime(2100, t + 0.06);
+  formantE.frequency.linearRampToValueAtTime(950, t + 0.34);
+
+  const mixGain = ctx.createGain();
+  mixGain.gain.setValueAtTime(0.6, t);
+
+  base.connect(formantA).connect(mixGain);
+  base.connect(formantE).connect(mixGain);
+
+  const vocalGain = ctx.createGain();
+  vocalGain.gain.setValueAtTime(0.0001, t);
+  vocalGain.gain.exponentialRampToValueAtTime(0.6, t + 0.05);
+  vocalGain.gain.linearRampToValueAtTime(0.4, t + 0.18);
+  vocalGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.58);
+
+  mixGain.connect(vocalGain).connect(master);
+
+  const bodyGain = ctx.createGain();
+  bodyGain.gain.setValueAtTime(0.0001, t);
+  bodyGain.gain.exponentialRampToValueAtTime(0.22, t + 0.04);
+  bodyGain.gain.linearRampToValueAtTime(0.16, t + 0.24);
+  bodyGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+  base.connect(bodyGain).connect(master);
+
+  const vibrato = ctx.createOscillator();
+  const vibratoGain = ctx.createGain();
+  vibrato.type = 'sine';
+  vibrato.frequency.setValueAtTime(6.5, t);
+  vibratoGain.gain.setValueAtTime(12, t);
+  vibratoGain.gain.linearRampToValueAtTime(3, t + 0.32);
+  vibrato.connect(vibratoGain).connect(base.frequency);
+
+  base.start(t);
+  base.stop(t + 0.6);
+  vibrato.start(t);
+  vibrato.stop(t + 0.6);
+
+  const chirp = ctx.createOscillator();
+  const chirpGain = ctx.createGain();
+  chirp.type = 'triangle';
+  chirp.frequency.setValueAtTime(1000, t + 0.08);
+  chirp.frequency.exponentialRampToValueAtTime(520, t + 0.24);
+  chirpGain.gain.setValueAtTime(0.0001, t + 0.08);
+  chirpGain.gain.exponentialRampToValueAtTime(0.3, t + 0.12);
+  chirpGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
+  chirp.connect(chirpGain).connect(master);
+  chirp.start(t + 0.08);
+  chirp.stop(t + 0.35);
+
+  createOsc(620, 'triangle', t + 0.16, 0.18, 0.18);
+  createOsc(300, 'sine', t + 0.28, 0.22, 0.12);
+  createNoise(0.32, t + 0.04, 0.12);
+}
+
 function clickMiau() {
   ensure();
   if (!ctx || !master) return;
   const t = now();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = 'triangle';
-  osc.frequency.setValueAtTime(320, t);
-  osc.frequency.exponentialRampToValueAtTime(520, t + 0.08);
-  osc.frequency.exponentialRampToValueAtTime(240, t + 0.26);
-  gain.gain.setValueAtTime(0, t);
-  gain.gain.linearRampToValueAtTime(0.5, t + 0.02);
-  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.32);
-  osc.connect(gain).connect(master);
-  osc.start(t);
-  osc.stop(t + 0.34);
-  createOsc(660, 'sine', t + 0.12, 0.07, 0.22);
-  createOsc(440, 'sine', t + 0.18, 0.06, 0.18);
+  preloadCatSamples(ctx).catch(() => {});
+  if (playRandomCatSample(ctx, master, t)) return;
+  playProceduralMiau(t);
 }
 
 const CLICK_VARIANT_HANDLERS: Record<ClickVariant, () => void> = {
@@ -332,6 +429,9 @@ export function initMutedFromStorage() {
 
 export function setClickVariant(variant: ClickVariant) {
   clickVariant = variant;
+  if (variant === 'miau') {
+    preloadCatSamples(ctx).catch(() => {});
+  }
 }
 
 export function getClickVariant(): ClickVariant {

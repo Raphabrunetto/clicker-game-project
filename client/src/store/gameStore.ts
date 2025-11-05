@@ -21,6 +21,7 @@ export type SoundVariant =
 type Upgrades = {
   clickMultiplier?: number;
   soundPack?: number;
+  selectedSound?: SoundVariant;
 };
 
 const SOUND_PACK_COSTS = [
@@ -69,6 +70,8 @@ interface GameState {
   buySoundPack: () => boolean;
 
   getSoundVariant: () => SoundVariant;
+  getUnlockedSoundVariants: () => SoundVariant[];
+  setSoundVariant: (variant: SoundVariant) => boolean;
 
   saveGame: () => Promise<void>;
   setOwnerUserId: (id: string | null) => void;
@@ -87,9 +90,20 @@ export const useGameStore = create<GameState>((set, get) => ({
     } catch {
       upgrades = {};
     }
+    const rawLevel =
+      typeof upgrades.soundPack === 'number' && Number.isFinite(upgrades.soundPack)
+        ? upgrades.soundPack
+        : 0;
+    const soundPack = Math.max(0, Math.min(rawLevel, SOUND_VARIANTS.length - 1));
+    const unlocked = SOUND_VARIANTS.slice(0, soundPack + 1);
+    const selected =
+      typeof upgrades.selectedSound === 'string' && unlocked.includes(upgrades.selectedSound)
+        ? upgrades.selectedSound
+        : unlocked[unlocked.length - 1];
+
     set({
       currency: BigInt(data.currency),
-      upgrades,
+      upgrades: { ...upgrades, soundPack, selectedSound: selected },
     });
   },
 
@@ -140,12 +154,24 @@ export const useGameStore = create<GameState>((set, get) => ({
     if (cost <= BigInt(0)) return false;
     const { currency, upgrades } = get();
     if (currency < cost) return false;
-    const currentLevel = upgrades.soundPack ?? 0;
+    const currentLevel = Math.max(0, upgrades.soundPack ?? 0);
     const nextLevel = Math.min(currentLevel + 1, SOUND_VARIANTS.length - 1);
+    if (nextLevel === currentLevel) return false;
+    const previouslyEquipped =
+      upgrades.selectedSound ??
+      SOUND_VARIANTS[Math.min(currentLevel, SOUND_VARIANTS.length - 1)];
+    const nextVariant = SOUND_VARIANTS[nextLevel];
+    const shouldAutoEquip =
+      !upgrades.selectedSound ||
+      upgrades.selectedSound === SOUND_VARIANTS[Math.min(currentLevel, SOUND_VARIANTS.length - 1)];
 
     set({
       currency: currency - cost,
-      upgrades: { ...upgrades, soundPack: nextLevel },
+      upgrades: {
+        ...upgrades,
+        soundPack: nextLevel,
+        selectedSound: shouldAutoEquip ? nextVariant : previouslyEquipped,
+      },
     });
     return true;
   },
@@ -153,7 +179,28 @@ export const useGameStore = create<GameState>((set, get) => ({
   getSoundVariant: () => {
     const level = get().upgrades.soundPack ?? 0;
     const idx = Math.min(level, SOUND_VARIANTS.length - 1);
+    const unlocked = SOUND_VARIANTS.slice(0, idx + 1);
+    const selected = get().upgrades.selectedSound;
+    if (selected && unlocked.includes(selected)) {
+      return selected;
+    }
     return SOUND_VARIANTS[idx];
+  },
+
+  getUnlockedSoundVariants: () => {
+    const level = Math.max(0, get().upgrades.soundPack ?? 0);
+    return SOUND_VARIANTS.slice(0, Math.min(level + 1, SOUND_VARIANTS.length));
+  },
+
+  setSoundVariant: (variant) => {
+    const unlocked = get().getUnlockedSoundVariants();
+    if (!unlocked.includes(variant)) return false;
+    const { upgrades } = get();
+    if (upgrades.selectedSound === variant) return true;
+    set({
+      upgrades: { ...upgrades, selectedSound: variant },
+    });
+    return true;
   },
 
   saveGame: async () => {
